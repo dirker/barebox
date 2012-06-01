@@ -1097,7 +1097,6 @@ static int __init imxnd_probe(struct device_d *dev)
 	this = &host->nand;
 	mtd = &host->mtd;
 	mtd->priv = this;
-	mtd->dev = dev;
 
 	/* 50 us command delay time */
 	this->chip_delay = 5;
