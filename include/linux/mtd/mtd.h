@@ -12,6 +12,7 @@
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #include <driver.h>
+#include <linux/err.h>
 #include <linux/types.h>
 #include <linux/list.h>
 #include <linux/mtd/mtd-abi.h>
@@ -26,6 +27,8 @@
 #define MTD_ERASE_SUSPEND	0x04
 #define MTD_ERASE_DONE          0x08
 #define MTD_ERASE_FAILED        0x10
+
+#define MTD_FAIL_ADDR_UNKNOWN -1LL
 
 /* If the erase fails, fail_addr might indicate exactly which block failed.  If
    fail_addr = 0xffffffff, the failure was not at the device level or was not
@@ -204,6 +207,35 @@ struct mtd_info {
 	struct param_d param_size;
 	char *size_str;
 };
+
+int mtd_erase(struct mtd_info *mtd, struct erase_info *instr);
+int mtd_read(struct mtd_info *mtd, loff_t from, size_t len, size_t *retlen,
+	     u_char *buf);
+int mtd_write(struct mtd_info *mtd, loff_t to, size_t len, size_t *retlen,
+	      const u_char *buf);
+
+static inline int mtd_read_oob(struct mtd_info *mtd, loff_t from,
+			       struct mtd_oob_ops *ops)
+{
+	ops->retlen = ops->oobretlen = 0;
+	if (!mtd->read_oob)
+		return -EOPNOTSUPP;
+	return mtd->read_oob(mtd, from, ops);
+}
+
+static inline int mtd_write_oob(struct mtd_info *mtd, loff_t to,
+				struct mtd_oob_ops *ops)
+{
+	ops->retlen = ops->oobretlen = 0;
+	if (!mtd->write_oob)
+		return -EOPNOTSUPP;
+	if (!(mtd->flags & MTD_WRITEABLE))
+		return -EROFS;
+	return mtd->write_oob(mtd, to, ops);
+}
+
+int mtd_block_isbad(struct mtd_info *mtd, loff_t ofs);
+int mtd_block_markbad(struct mtd_info *mtd, loff_t ofs);
 
 static inline uint32_t mtd_div_by_eb(uint64_t sz, struct mtd_info *mtd)
 {
