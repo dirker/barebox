@@ -37,7 +37,7 @@ static struct mtd_info *to_mtd(struct cdev *cdev)
 	return mtdoob->mtd;
 }
 
-static ssize_t mtd_read_oob(struct cdev *cdev, void *buf, size_t count,
+static ssize_t mtdoob_read(struct cdev *cdev, void *buf, size_t count,
 			     ulong offset, ulong flags)
 {
 	struct mtd_info *mtd = to_mtd(cdev);
@@ -62,8 +62,8 @@ static ssize_t mtd_read_oob(struct cdev *cdev, void *buf, size_t count,
 	return mtd->oobsize;
 }
 
-static struct file_operations mtd_ops_oob = {
-	.read   = mtd_read_oob,
+static struct file_operations mtdoob_ops = {
+	.read   = mtdoob_read,
 	.ioctl  = mtddev_ioctl,
 	.lseek  = dev_lseek_default,
 };
@@ -73,7 +73,7 @@ static int add_mtdoob_device(struct mtd_info *mtd, char *devname)
 	struct mtdoob *mtdoob;
 
 	mtdoob = xzalloc(sizeof(*mtdoob));
-	mtdoob->cdev.ops = &mtd_ops_oob;
+	mtdoob->cdev.ops = &mtdoob_ops;
 	mtdoob->cdev.size = (mtd->size / mtd->writesize) * mtd->oobsize;
 	mtdoob->cdev.name = asprintf("%s_oob%d", devname, mtd->class_dev.id);
 	mtdoob->cdev.priv = mtdoob;
