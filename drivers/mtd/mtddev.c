@@ -28,9 +28,12 @@
 
 #include "mtd.h"
 
-static LIST_HEAD(mtd_register_hooks);
+struct mtddev {
+	struct cdev cdev;
+	struct mtd_info *mtd;
+};
 
-static 	ssize_t mtd_read(struct cdev *cdev, void* buf, size_t count,
+static ssize_t mtddev_read(struct cdev *cdev, void* buf, size_t count,
 			  ulong offset, ulong flags)
 {
 	struct mtd_info *mtd = cdev->priv;
@@ -63,7 +66,7 @@ static int all_ff(const void *buf, int len)
 	return 1;
 }
 
-static ssize_t mtd_write(struct cdev* cdev, const void *buf, size_t _count,
+static ssize_t mtddev_write(struct cdev* cdev, const void *buf, size_t _count,
 			  ulong offset, ulong flags)
 {
 	struct mtd_info *mtd = cdev->priv;
@@ -114,7 +117,7 @@ out:
 }
 #endif
 
-int mtd_ioctl(struct cdev *cdev, int request, void *buf)
+int mtddev_ioctl(struct cdev *cdev, int request, void *buf)
 {
 	int ret = 0;
 	struct mtd_info *mtd = cdev->priv;
@@ -170,7 +173,7 @@ int mtd_ioctl(struct cdev *cdev, int request, void *buf)
 }
 
 #ifdef CONFIG_MTD_WRITE
-static ssize_t mtd_erase(struct cdev *cdev, size_t count, unsigned long offset)
+static ssize_t mtddev_erase(struct cdev *cdev, size_t count, unsigned long offset)
 {
 	struct mtd_info *mtd = cdev->priv;
 	struct erase_info erase;
@@ -201,68 +204,41 @@ static ssize_t mtd_erase(struct cdev *cdev, size_t count, unsigned long offset)
 }
 #endif
 
-static struct file_operations mtd_ops = {
-	.read   = mtd_read,
+static struct file_operations mtddev_ops = {
+	.read   = mtddev_read,
 #ifdef CONFIG_MTD_WRITE
-	.write  = mtd_write,
-	.erase  = mtd_erase,
+	.write  = mtddev_write,
+	.erase  = mtddev_erase,
 #endif
-	.ioctl  = mtd_ioctl,
+	.ioctl  = mtddev_ioctl,
 	.lseek  = dev_lseek_default,
 };
 
-int add_mtd_device(struct mtd_info *mtd, char *devname)
+static int mtddev_add(struct mtd_info *mtd, char *devname)
 {
-	char str[16];
-	struct mtddev_hook *hook;
+	struct mtddev *mtddev;
 
-	if (!devname)
-		devname = "mtd";
-	strcpy(mtd->class_dev.name, devname);
-	mtd->class_dev.id = DEVICE_ID_DYNAMIC;
-	register_device(&mtd->class_dev);
+	mtddev = xzalloc(sizeof(*mtddev));
+	mtddev->mtd = mtd;
 
-	mtd->cdev.ops = &mtd_ops;
-	mtd->cdev.size = mtd->size;
-	mtd->cdev.name = asprintf("%s%d", devname, mtd->class_dev.id);
-	mtd->cdev.priv = mtd;
-	mtd->cdev.dev = &mtd->class_dev;
-	mtd->cdev.mtd = mtd;
+	mtddev->cdev.ops = &mtddev_ops;
+	mtddev->cdev.size = mtd->size;
+	mtddev->cdev.name = asprintf("%s%d", devname, mtd->class_dev.id);
+	mtddev->cdev.priv = mtd;
+	mtddev->cdev.dev = &mtd->class_dev;
+	mtddev->cdev.mtd = mtd;
 
-	if (IS_ENABLED(CONFIG_PARAMETER)) {
-		sprintf(str, "%u", mtd->size);
-		dev_add_param_fixed(&mtd->class_dev, "size", str);
-		sprintf(str, "%u", mtd->erasesize);
-		dev_add_param_fixed(&mtd->class_dev, "erasesize", str);
-		sprintf(str, "%u", mtd->writesize);
-		dev_add_param_fixed(&mtd->class_dev, "writesize", str);
-		sprintf(str, "%u", mtd->oobsize);
-		dev_add_param_fixed(&mtd->class_dev, "oobsize", str);
-	}
-
-	devfs_create(&mtd->cdev);
-
-	list_for_each_entry(hook, &mtd_register_hooks, hook)
-		if (hook->add_mtd_device)
-			hook->add_mtd_device(mtd, devname);
-
+	devfs_create(&mtddev->cdev);
 	return 0;
 }
 
-int del_mtd_device (struct mtd_info *mtd)
-{
-	struct mtddev_hook *hook;
+static struct mtddev_hook mtddev_hook = {
+	.add_mtd_device = mtddev_add,
+};
 
-	list_for_each_entry(hook, &mtd_register_hooks, hook)
-		if (hook->del_mtd_device)
-			hook->del_mtd_device(mtd);
-	unregister_device(&mtd->class_dev);
-	free(mtd->param_size.value);
-	free(mtd->cdev.name);
+static int __init mtddev_init(void)
+{
+	mtdcore_add_hook(&mtddev_hook);
 	return 0;
 }
-
-void mtdcore_add_hook(struct mtddev_hook *hook)
-{
-	list_add(&hook->hook, &mtd_register_hooks);
-}
+coredevice_initcall(mtddev_init);
