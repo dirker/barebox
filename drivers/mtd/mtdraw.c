@@ -49,16 +49,16 @@
  * @write_ofs: offset in character device (mtdraw) where last write(s) stored
  * bytes because of unaligned writes (ie. remain of writesize+oobsize write)
  *
- * The mtdraw device must allow unaligned writes. This is enabled by a write buffer which gathers data to issue mtd->write_oob() with full page+oob data.
+ * The mtdraw device must allow unaligned writes. This is enabled by a write buffer which gathers data to issue mtd_write_oob() with full page+oob data.
  * Suppose writesize=512, oobsize=16.
  * A first write of 512 bytes triggers:
  *  - write_ofs = offset of write()
  *  - write_fill = 512
  *  - copy of the 512 provided bytes into writebuf
- *  - no actual mtd->write if done
+ *  - no actual mtd_write() if done
  * A second write of 512 bytes triggers:
  *  - copy of the 16 first bytes into writebuf
- *  - a mtd->write_oob() from writebuf
+ *  - a mtd_write_oob() from writebuf
  *  - empty writebuf
  *  - copy the remaining 496 bytes into writebuf
  *    => write_fill = 496, write_ofs = offset + 528
@@ -102,7 +102,7 @@ static ssize_t mtdraw_read_unaligned(struct mtd_info *mtd, void *dst,
 	ops.len = mtd->writesize;
 	ops.oobbuf = tmp + mtd->writesize;
 	ops.ooblen = mtd->oobsize;
-	ret = mtd->read_oob(mtd, offset, &ops);
+	ret = mtd_read_oob(mtd, offset, &ops);
 	if (ret)
 		goto err;
 	if (partial)
@@ -154,7 +154,7 @@ static ssize_t mtdraw_blkwrite(struct mtd_info *mtd, const void *buf,
 	ops.len = mtd->writesize;
 	ops.oobbuf = (void *)buf + mtd->writesize;
 	ops.ooblen = mtd->oobsize;
-	ret = mtd->write_oob(mtd, offset, &ops);
+	ret = mtd_write_oob(mtd, offset, &ops);
 	if (!ret)
 		ret = ops.retlen + ops.oobretlen;
 	return ret;
@@ -237,11 +237,11 @@ static ssize_t mtdraw_erase(struct cdev *cdev, size_t count, ulong offset)
 	while (count > 0) {
 		debug("erase %d %d\n", erase.addr, erase.len);
 
-		ret = mtd->block_isbad(mtd, erase.addr);
+		ret = mtd_block_isbad(mtd, erase.addr);
 		if (ret > 0) {
 			printf("Skipping bad block at 0x%08x\n", erase.addr);
 		} else {
-			ret = mtd->erase(mtd, &erase);
+			ret = mtd_erase(mtd, &erase);
 			if (ret)
 				return ret;
 		}

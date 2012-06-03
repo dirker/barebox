@@ -1074,7 +1074,7 @@ static int __init find_media_headers(struct mtd_info *mtd, u_char *buf,
 
 	end = min(end, mtd->size); /* paranoia */
 	for (offs = 0; offs < end; offs += mtd->erasesize) {
-		ret = mtd->read(mtd, offs, mtd->oobblock, &retlen, buf);
+		ret = mtd_read(mtd, offs, mtd->oobblock, &retlen, buf);
 		if (retlen != mtd->oobblock) continue;
 		if (ret) {
 			printk(KERN_WARNING "ECC error scanning DOC at 0x%x\n",
@@ -1097,7 +1097,7 @@ static int __init find_media_headers(struct mtd_info *mtd, u_char *buf,
 	/* Only one mediaheader was found.  We want buf to contain a
 	   mediaheader on return, so we'll have to re-read the one we found. */
 	offs = doc->mh0_page << this->page_shift;
-	ret = mtd->read(mtd, offs, mtd->oobblock, &retlen, buf);
+	ret = mtd_read(mtd, offs, mtd->oobblock, &retlen, buf);
 	if (retlen != mtd->oobblock) {
 		/* Insanity.  Give up. */
 		printk(KERN_ERR "Read DiskOnChip Media Header once, but can't reread it???\n");

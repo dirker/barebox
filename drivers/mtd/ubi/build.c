@@ -636,7 +636,7 @@ static int io_init(struct ubi_device *ubi)
 	/*
 	 * Note, ideally, we have to initialize ubi->bad_peb_count here. But
 	 * unfortunately, MTD does not provide this information. We should loop
-	 * over all physical eraseblocks and invoke mtd->block_is_bad() for
+	 * over all physical eraseblocks and invoke mtd_block_is_bad() for
 	 * each physical eraseblock. So, we skip ubi->bad_peb_count
 	 * uninitialized and initialize it after scanning.
 	 */

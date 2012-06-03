@@ -157,7 +157,7 @@ static int read_bbt(struct mtd_info *mtd, uint8_t *buf, int page, int num,
 
 	while (totlen) {
 		len = min(totlen, (size_t) (1 << this->bbt_erase_shift));
-		res = mtd->read(mtd, from, len, &retlen, buf);
+		res = mtd_read(mtd, from, len, &retlen, buf);
 		if (res < 0) {
 			if (retlen != len) {
 				printk(KERN_INFO "nand_bbt: Error reading bad block table\n");
@@ -248,7 +248,7 @@ static int scan_read_raw(struct mtd_info *mtd, uint8_t *buf, loff_t offs,
 	ops.datbuf = buf;
 	ops.len = len;
 
-	return mtd->read_oob(mtd, offs, &ops);
+	return mtd_read_oob(mtd, offs, &ops);
 }
 
 /*
@@ -266,7 +266,7 @@ static int scan_write_bbt(struct mtd_info *mtd, loff_t offs, size_t len,
 	ops.oobbuf = oob;
 	ops.len = len;
 
-	return mtd->write_oob(mtd, offs, &ops);
+	return mtd_write_oob(mtd, offs, &ops);
 }
 
 /**
@@ -346,7 +346,7 @@ static int scan_block_fast(struct mtd_info *mtd, struct nand_bbt_descr *bd,
 		 * handle single byte reads for 16 bit
 		 * buswidth
 		 */
-		ret = mtd->read_oob(mtd, offs, &ops);
+		ret = mtd_read_oob(mtd, offs, &ops);
 		if (ret)
 			return ret;
 
@@ -664,7 +664,7 @@ static int write_bbt(struct mtd_info *mtd, uint8_t *buf,
 			/* Make it block aligned */
 			to &= ~((loff_t) ((1 << this->bbt_erase_shift) - 1));
 			len = 1 << this->bbt_erase_shift;
-			res = mtd->read(mtd, to, len, &retlen, buf);
+			res = mtd_read(mtd, to, len, &retlen, buf);
 			if (res < 0) {
 				if (retlen != len) {
 					printk(KERN_INFO "nand_bbt: Error "
@@ -679,7 +679,7 @@ static int write_bbt(struct mtd_info *mtd, uint8_t *buf,
 			/* Read oob data */
 			ops.ooblen = (len >> this->page_shift) * mtd->oobsize;
 			ops.oobbuf = &buf[len];
-			res = mtd->read_oob(mtd, to + mtd->writesize, &ops);
+			res = mtd_read_oob(mtd, to + mtd->writesize, &ops);
 			if (res < 0 || ops.oobretlen != ops.ooblen)
 				goto outerr;
 

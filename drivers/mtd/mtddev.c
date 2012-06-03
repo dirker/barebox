@@ -42,7 +42,7 @@ static ssize_t mtddev_read(struct cdev *cdev, void* buf, size_t count,
 
 	debug("mtd_read: 0x%08lx 0x%08x\n", offset, count);
 
-	ret = mtd->read(mtd, offset, count, &retlen, buf);
+	ret = mtd_read(mtd, offset, count, &retlen, buf);
 
 	if(ret) {
 		printf("err %d\n", ret);
@@ -92,13 +92,13 @@ static ssize_t mtddev_write(struct cdev* cdev, const void *buf, size_t _count,
 			memset(wrbuf, 0xff, mtd->writesize);
 			memcpy(wrbuf + (offset % mtd->writesize), buf, now);
 			if (!all_ff(wrbuf, mtd->writesize))
-				ret = mtd->write(mtd, MTDPGALG(offset),
+				ret = mtd_write(mtd, MTDPGALG(offset),
 						  mtd->writesize, &retlen,
 						  wrbuf);
 			free(wrbuf);
 		} else {
 			if (!all_ff(buf, mtd->writesize))
-				ret = mtd->write(mtd, offset, now, &retlen,
+				ret = mtd_write(mtd, offset, now, &retlen,
 						  buf);
 			dev_dbg(cdev->dev,
 				"offset: 0x%08lx now: 0x%08x retlen: 0x%08x\n",
@@ -130,12 +130,12 @@ int mtddev_ioctl(struct cdev *cdev, int request, void *buf)
 	switch (request) {
 	case MEMGETBADBLOCK:
 		dev_dbg(cdev->dev, "MEMGETBADBLOCK: 0x%08lx\n", (off_t)buf);
-		ret = mtd->block_isbad(mtd, (off_t)buf);
+		ret = mtd_block_isbad(mtd, (off_t)buf);
 		break;
 #ifdef CONFIG_MTD_WRITE
 	case MEMSETBADBLOCK:
 		dev_dbg(cdev->dev, "MEMSETBADBLOCK: 0x%08lx\n", (off_t)buf);
-		ret = mtd->block_markbad(mtd, (off_t)buf);
+		ret = mtd_block_markbad(mtd, (off_t)buf);
 		break;
 #endif
 	case MEMGETINFO:
@@ -187,11 +187,11 @@ static ssize_t mtddev_erase(struct cdev *cdev, size_t count, unsigned long offse
 	while (count > 0) {
 		dev_dbg(cdev->dev, "erase %d %d\n", erase.addr, erase.len);
 
-		ret = mtd->block_isbad(mtd, erase.addr);
+		ret = mtd_block_isbad(mtd, erase.addr);
 		if (ret > 0) {
 			printf("Skipping bad block at 0x%08x\n", erase.addr);
 		} else {
-			ret = mtd->erase(mtd, &erase);
+			ret = mtd_erase(mtd, &erase);
 			if (ret)
 				return ret;
 		}
