@@ -86,7 +86,7 @@ barebox_default_env.lzo: barebox_default_env
 
 include/generated/barebox_default_env.h: barebox_default_env$(barebox_default_env_comp)
 	$(Q)cat $< | $(objtree)/scripts/bin2c default_environment > $@
-	$(Q)echo "const int default_environment_uncompress_size=`stat -c%s barebox_default_env`;" >> $@
+	$(Q)echo "const int default_environment_uncompress_size=`wc -c < barebox_default_env`;" >> $@
 
 CLEAN_FILES += include/generated/barebox_default_env.h barebox_default_env
 CLEAN_FILES += barebox_default_env.gz barebox_default_env.bz2

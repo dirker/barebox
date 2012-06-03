@@ -536,7 +536,7 @@ quiet_cmd_barebox_version = GEN     .version
 # Check size of a file
 quiet_cmd_check_file_size = CHKSIZE $@
       cmd_check_file_size = set -e;					\
-	size=`stat -c%s $@`;						\
+	size=`wc -c < $@`;						\
 	max_size=`printf "%d" $2`;					\
 	if [ $$size -gt $$max_size ] ;					\
 	then								\
