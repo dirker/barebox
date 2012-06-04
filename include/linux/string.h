@@ -3,6 +3,7 @@
 
 #include <linux/types.h>	/* for size_t */
 #include <linux/stddef.h>	/* for NULL */
+#include <linux/compiler.h>	/* for __must_check */
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,6 +60,15 @@ extern char * _strchr(const char *,int);
 #ifndef __HAVE_ARCH_STRRCHR
 extern char * _strrchr(const char *,int);
 #endif
+extern char * __must_check skip_spaces(const char *);
+
+extern char *strim(char *);
+
+static inline __must_check char *strstrip(char *str)
+{
+	return strim(str);
+}
+
 #ifndef __HAVE_ARCH_STRSTR
 extern char * _strstr(const char *,const char *);
 #endif
