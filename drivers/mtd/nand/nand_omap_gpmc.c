@@ -923,7 +923,7 @@ static int gpmc_nand_probe(struct device_d *pdev)
 	mdelay(1);
 
 	/* first scan to find the device and get the page size */
-	if (nand_scan_ident(minfo, 1)) {
+	if (nand_scan_ident(minfo, 1, NULL)) {
 		err = -ENXIO;
 		goto out_release_mem;
 	}

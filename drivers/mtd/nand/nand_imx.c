@@ -1149,7 +1149,7 @@ static int __init imxnd_probe(struct device_d *dev)
 	}
 
 	/* first scan to find the device and get the page size */
-	if (nand_scan_ident(mtd, 1)) {
+	if (nand_scan_ident(mtd, 1, NULL)) {
 		err = -ENXIO;
 		goto escan;
 	}
