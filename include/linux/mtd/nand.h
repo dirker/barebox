@@ -1,11 +1,9 @@
 /*
  *  linux/include/linux/mtd/nand.h
  *
- *  Copyright (c) 2000 David Woodhouse <dwmw2@infradead.org>
- *                     Steven J. Hill <sjhill@realitydiluted.com>
- *		       Thomas Gleixner <tglx@linutronix.de>
- *
- * $Id: nand.h,v 1.74 2005/09/15 13:58:50 vwool Exp $
+ *  Copyright © 2000-2010 David Woodhouse <dwmw2@infradead.org>
+ *                        Steven J. Hill <sjhill@realitydiluted.com>
+ *		          Thomas Gleixner <tglx@linutronix.de>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -26,14 +24,16 @@
 
 struct mtd_info;
 /* Scan and identify a NAND device */
-extern int nand_scan (struct mtd_info *mtd, int max_chips);
-/* Separate phases of nand_scan(), allowing board driver to intervene
- * and override command or ECC setup according to flash type */
+extern int nand_scan(struct mtd_info *mtd, int max_chips);
+/*
+ * Separate phases of nand_scan(), allowing board driver to intervene
+ * and override command or ECC setup according to flash type.
+ */
 extern int nand_scan_ident(struct mtd_info *mtd, int max_chips);
 extern int nand_scan_tail(struct mtd_info *mtd);
 
 /* Free resources held by the NAND device */
-extern void nand_release (struct mtd_info *mtd);
+extern void nand_release(struct mtd_info *mtd);
 
 /* Internal helper for board drivers which need to override command function */
 extern void nand_wait_ready(struct mtd_info *mtd);
@@ -41,7 +41,8 @@ extern void nand_wait_ready(struct mtd_info *mtd);
 /* The maximum number of NAND chips in an array */
 #define NAND_MAX_CHIPS		8
 
-/* This constant declares the max. oobsize / page, which
+/*
+ * This constant declares the max. oobsize / page, which
  * is supported now. If you add a chip with bigger oobsize/page
  * adjust this accordingly.
  */
@@ -132,19 +133,20 @@ typedef enum {
 #define NAND_ECC_READ		0
 /* Reset Hardware ECC for write */
 #define NAND_ECC_WRITE		1
-/* Enable Hardware ECC before syndrom is read back from flash */
+/* Enable Hardware ECC before syndrome is read back from flash */
 #define NAND_ECC_READSYN	2
 
 /* Bit mask for flags passed to do_nand_read_ecc */
 #define NAND_GET_DEVICE		0x80
 
 
-/* Option constants for bizarre disfunctionality and real
-*  features
-*/
+/*
+ * Option constants for bizarre disfunctionality and real
+ * features.
+ */
 /* Chip can not auto increment pages */
 #define NAND_NO_AUTOINCR	0x00000001
-/* Buswitdh is 16 bit */
+/* Buswidth is 16 bit */
 #define NAND_BUSWIDTH_16	0x00000002
 /* Device supports partial programming without padding */
 #define NAND_NO_PADDING		0x00000004
@@ -152,19 +154,27 @@ typedef enum {
 #define NAND_CACHEPRG		0x00000008
 /* Chip has copy back function */
 #define NAND_COPYBACK		0x00000010
-/* AND Chip which has 4 banks and a confusing page / block
- * assignment. See Renesas datasheet for further information */
+/*
+ * AND Chip which has 4 banks and a confusing page / block
+ * assignment. See Renesas datasheet for further information.
+ */
 #define NAND_IS_AND		0x00000020
-/* Chip has a array of 4 pages which can be read without
- * additional ready /busy waits */
+/*
+ * Chip has a array of 4 pages which can be read without
+ * additional ready /busy waits.
+ */
 #define NAND_4PAGE_ARRAY	0x00000040
-/* Chip requires that BBT is periodically rewritten to prevent
+/*
+ * Chip requires that BBT is periodically rewritten to prevent
  * bits from adjacent blocks from 'leaking' in altering data.
- * This happens with the Renesas AG-AND chips, possibly others.  */
+ * This happens with the Renesas AG-AND chips, possibly others.
+ */
 #define BBT_AUTO_REFRESH	0x00000080
-/* Chip does not require ready check on read. True
+/*
+ * Chip does not require ready check on read. True
  * for all large page devices, as they do not support
- * autoincrement.*/
+ * autoincrement.
+ */
 #define NAND_NO_READRDY		0x00000100
 /* Chip does not allow subpage writes */
 #define NAND_NO_SUBPAGE_WRITE	0x00000200
@@ -189,8 +199,10 @@ typedef enum {
 #define NAND_USE_FLASH_BBT	0x00010000
 /* This option skips the bbt scan during initialization. */
 #define NAND_SKIP_BBTSCAN	0x00020000
-/* This option is defined if the board driver allocates its own buffers
-   (e.g. because it needs them DMA-coherent */
+/*
+ * This option is defined if the board driver allocates its own buffers
+ * (e.g. because it needs them DMA-coherent).
+ */
 #define NAND_OWN_BUFFERS	0x00040000
 /* Options set by nand scan */
 /* Nand scan has allocated controller struct */
@@ -219,10 +231,7 @@ struct nand_chip;
 
 /**
  * struct nand_hw_control - Control structure for hardware controller (e.g ECC generator) shared among independent devices
- * @lock:               protection lock
  * @active:		the mtd device which holds the controller currently
- * @wq:			wait queue to sleep on if a NAND operation is in progress
- *                      used instead of the per chip wait queue when a hw controller is available
  */
 struct nand_hw_control {
 	struct nand_chip *active;
@@ -230,66 +239,59 @@ struct nand_hw_control {
 
 /**
  * struct nand_ecc_ctrl - Control structure for ecc
- * @mode:	ecc mode
- * @steps:	number of ecc steps per page
- * @size:	data bytes per ecc step
- * @bytes:	ecc bytes per step
- * @total:	total number of ecc bytes per page
- * @prepad:	padding information for syndrome based ecc generators
- * @postpad:	padding information for syndrome based ecc generators
+ * @mode:	ECC mode
+ * @steps:	number of ECC steps per page
+ * @size:	data bytes per ECC step
+ * @bytes:	ECC bytes per step
+ * @total:	total number of ECC bytes per page
+ * @prepad:	padding information for syndrome based ECC generators
+ * @postpad:	padding information for syndrome based ECC generators
  * @layout:	ECC layout control struct pointer
- * @hwctl:	function to control hardware ecc generator. Must only
+ * @hwctl:	function to control hardware ECC generator. Must only
  *		be provided if an hardware ECC is available
- * @calculate:	function for ecc calculation or readback from ecc hardware
- * @correct:	function for ecc correction, matching to ecc generator (sw/hw)
+ * @calculate:	function for ECC calculation or readback from ECC hardware
+ * @correct:	function for ECC correction, matching to ECC generator (sw/hw)
  * @read_page_raw:	function to read a raw page without ECC
  * @write_page_raw:	function to write a raw page without ECC
- * @read_page:	function to read a page according to the ecc generator requirements
- * @write_page:	function to write a page according to the ecc generator requirements
+ * @read_page:	function to read a page according to the ECC generator
+ *		requirements.
+ * @write_page:	function to write a page according to the ECC generator
+ *		requirements.
  * @read_oob:	function to read chip OOB data
  * @write_oob:	function to write chip OOB data
  */
 struct nand_ecc_ctrl {
-	nand_ecc_modes_t	mode;
-	int			steps;
-	int			size;
-	int			bytes;
-	int			total;
-	int			prepad;
-	int			postpad;
+	nand_ecc_modes_t mode;
+	int steps;
+	int size;
+	int bytes;
+	int total;
+	int prepad;
+	int postpad;
 	struct nand_ecclayout	*layout;
-	void			(*hwctl)(struct mtd_info *mtd, int mode);
-	int			(*calculate)(struct mtd_info *mtd,
-					     const uint8_t *dat,
-					     uint8_t *ecc_code);
-	int			(*correct)(struct mtd_info *mtd, uint8_t *dat,
-					   uint8_t *read_ecc,
-					   uint8_t *calc_ecc);
-	int			(*read_page_raw)(struct mtd_info *mtd,
-						 struct nand_chip *chip,
-						 uint8_t *buf);
-	void			(*write_page_raw)(struct mtd_info *mtd,
-						  struct nand_chip *chip,
-						  const uint8_t *buf);
-	int			(*read_page)(struct mtd_info *mtd,
-					     struct nand_chip *chip,
-					     uint8_t *buf);
-	void			(*write_page)(struct mtd_info *mtd,
-					      struct nand_chip *chip,
-					      const uint8_t *buf);
-	int			(*read_oob)(struct mtd_info *mtd,
-					    struct nand_chip *chip,
-					    int page,
-					    int sndcmd);
-	int			(*write_oob)(struct mtd_info *mtd,
-					     struct nand_chip *chip,
-					     int page);
+	void (*hwctl)(struct mtd_info *mtd, int mode);
+	int (*calculate)(struct mtd_info *mtd, const uint8_t *dat,
+			uint8_t *ecc_code);
+	int (*correct)(struct mtd_info *mtd, uint8_t *dat, uint8_t *read_ecc,
+			uint8_t *calc_ecc);
+	int (*read_page_raw)(struct mtd_info *mtd, struct nand_chip *chip,
+			uint8_t *buf);
+	void (*write_page_raw)(struct mtd_info *mtd, struct nand_chip *chip,
+			const uint8_t *buf);
+	int (*read_page)(struct mtd_info *mtd, struct nand_chip *chip,
+			uint8_t *buf);
+	void (*write_page)(struct mtd_info *mtd, struct nand_chip *chip,
+			const uint8_t *buf);
+	int (*read_oob)(struct mtd_info *mtd, struct nand_chip *chip, int page,
+			int sndcmd);
+	int (*write_oob)(struct mtd_info *mtd, struct nand_chip *chip,
+			int page);
 };
 
 /**
  * struct nand_buffers - buffer structure for read/write
- * @ecccalc:	buffer for calculated ecc
- * @ecccode:	buffer for ecc read from flash
+ * @ecccalc:	buffer for calculated ECC
+ * @ecccode:	buffer for ECC read from flash
  * @databuf:	buffer for data - dynamically sized
  *
  * Do not change the order of buffers. databuf and oobrbuf must be in
@@ -303,106 +305,119 @@ struct nand_buffers {
 
 /**
  * struct nand_chip - NAND Private Flash Chip Data
- * @IO_ADDR_R:		[BOARDSPECIFIC] address to read the 8 I/O lines of the flash device
- * @IO_ADDR_W:		[BOARDSPECIFIC] address to write the 8 I/O lines of the flash device
+ * @IO_ADDR_R:		[BOARDSPECIFIC] address to read the 8 I/O lines of the
+ *			flash device
+ * @IO_ADDR_W:		[BOARDSPECIFIC] address to write the 8 I/O lines of the
+ *			flash device.
  * @read_byte:		[REPLACEABLE] read one byte from the chip
  * @read_word:		[REPLACEABLE] read one word from the chip
  * @write_buf:		[REPLACEABLE] write data from the buffer to the chip
  * @read_buf:		[REPLACEABLE] read data from the chip into the buffer
- * @verify_buf:		[REPLACEABLE] verify buffer contents against the chip data
+ * @verify_buf:		[REPLACEABLE] verify buffer contents against the chip
+ *			data.
  * @select_chip:	[REPLACEABLE] select chip nr
  * @block_bad:		[REPLACEABLE] check, if the block is bad
  * @block_markbad:	[REPLACEABLE] mark the block bad
  * @cmd_ctrl:		[BOARDSPECIFIC] hardwarespecific function for controlling
  *			ALE/CLE/nCE. Also used to write command and address
- * @dev_ready:		[BOARDSPECIFIC] hardwarespecific function for accesing device ready/busy line
- *			If set to NULL no access to ready/busy is available and the ready/busy information
- *			is read from the chip status register
- * @cmdfunc:		[REPLACEABLE] hardwarespecific function for writing commands to the chip
- * @waitfunc:		[REPLACEABLE] hardwarespecific function for wait on ready
- * @ecc:		[BOARDSPECIFIC] ecc control ctructure
+ * @dev_ready:		[BOARDSPECIFIC] hardwarespecific function for accessing
+ *			device ready/busy line. If set to NULL no access to
+ *			ready/busy is available and the ready/busy information
+ *			is read from the chip status register.
+ * @cmdfunc:		[REPLACEABLE] hardwarespecific function for writing
+ *			commands to the chip.
+ * @waitfunc:		[REPLACEABLE] hardwarespecific function for wait on
+ *			ready.
+ * @ecc:		[BOARDSPECIFIC] ECC control structure
  * @buffers:		buffer structure for read/write
  * @hwcontrol:		platform-specific hardware control structure
  * @ops:		oob operation operands
- * @erase_cmd:		[INTERN] erase command write function, selectable due to AND support
+ * @erase_cmd:		[INTERN] erase command write function, selectable due
+ *			to AND support.
  * @scan_bbt:		[REPLACEABLE] function to scan bad block table
- * @chip_delay:		[BOARDSPECIFIC] chip dependent delay for transfering data from array to read regs (tR)
- * @wq:			[INTERN] wait queue to sleep on if a NAND operation is in progress
+ * @chip_delay:		[BOARDSPECIFIC] chip dependent delay for transferring
+ *			data from array to read regs (tR).
  * @state:		[INTERN] the current state of the NAND device
- * @oob_poi:		poison value buffer
- * @page_shift:		[INTERN] number of address bits in a page (column address bits)
+ * @oob_poi:		"poison value buffer," used for laying out OOB data
+ *			before writing
+ * @page_shift:		[INTERN] number of address bits in a page (column
+ *			address bits).
  * @phys_erase_shift:	[INTERN] number of address bits in a physical eraseblock
  * @bbt_erase_shift:	[INTERN] number of address bits in a bbt entry
  * @chip_shift:		[INTERN] number of address bits in one chip
- * @datbuf:		[INTERN] internal buffer for one page + oob
- * @oobbuf:		[INTERN] oob buffer for one eraseblock
- * @oobdirty:		[INTERN] indicates that oob_buf must be reinitialized
- * @data_poi:		[INTERN] pointer to a data buffer
- * @options:		[BOARDSPECIFIC] various chip options. They can partly be set to inform nand_scan about
- *			special functionality. See the defines for further explanation
- * @badblockpos:	[INTERN] position of the bad block marker in the oob area
+ * @options:		[BOARDSPECIFIC] various chip options. They can partly
+ *			be set to inform nand_scan about special functionality.
+ *			See the defines for further explanation.
+ * @badblockpos:	[INTERN] position of the bad block marker in the oob
+ *			area.
  * @cellinfo:		[INTERN] MLC/multichip data from chip ident
  * @numchips:		[INTERN] number of physical chips
  * @chipsize:		[INTERN] the size of one chip for multichip arrays
  * @pagemask:		[INTERN] page number mask = number of (pages / chip) - 1
- * @pagebuf:		[INTERN] holds the pagenumber which is currently in data_buf
+ * @pagebuf:		[INTERN] holds the pagenumber which is currently in
+ *			data_buf.
  * @subpagesize:	[INTERN] holds the subpagesize
- * @ecclayout:		[REPLACEABLE] the default ecc placement scheme
+ * @ecclayout:		[REPLACEABLE] the default ECC placement scheme
  * @bbt:		[INTERN] bad block table pointer
- * @bbt_td:		[REPLACEABLE] bad block table descriptor for flash lookup
+ * @bbt_td:		[REPLACEABLE] bad block table descriptor for flash
+ *			lookup.
  * @bbt_md:		[REPLACEABLE] bad block table mirror descriptor
- * @badblock_pattern:	[REPLACEABLE] bad block scan pattern used for initial bad block scan
- * @controller:		[REPLACEABLE] a pointer to a hardware controller structure
- *			which is shared among multiple independend devices
- * @priv:		[OPTIONAL] pointer to private chip date
- * @errstat:		[OPTIONAL] hardware specific function to perform additional error status checks
- *			(determine if errors are correctable)
+ * @badblock_pattern:	[REPLACEABLE] bad block scan pattern used for initial
+ *			bad block scan.
+ * @controller:		[REPLACEABLE] a pointer to a hardware controller
+ *			structure which is shared among multiple independent
+ *			devices.
+ * @priv:		[OPTIONAL] pointer to private chip data
+ * @errstat:		[OPTIONAL] hardware specific function to perform
+ *			additional error status checks (determine if errors are
+ *			correctable).
  * @write_page:		[REPLACEABLE] High-level page write function
  */
+
 struct nand_chip {
+	void __iomem *IO_ADDR_R;
+	void __iomem *IO_ADDR_W;
 
-	void __iomem	*IO_ADDR_R;
-	void __iomem	*IO_ADDR_W;
+	uint8_t (*read_byte)(struct mtd_info *mtd);
+	u16 (*read_word)(struct mtd_info *mtd);
+	void (*write_buf)(struct mtd_info *mtd, const uint8_t *buf, int len);
+	void (*read_buf)(struct mtd_info *mtd, uint8_t *buf, int len);
+	int (*verify_buf)(struct mtd_info *mtd, const uint8_t *buf, int len);
+	void (*select_chip)(struct mtd_info *mtd, int chip);
+	int (*block_bad)(struct mtd_info *mtd, loff_t ofs, int getchip);
+	int (*block_markbad)(struct mtd_info *mtd, loff_t ofs);
+	void (*cmd_ctrl)(struct mtd_info *mtd, int dat, unsigned int ctrl);
+	int (*dev_ready)(struct mtd_info *mtd);
+	void (*cmdfunc)(struct mtd_info *mtd, unsigned command, int column,
+			int page_addr);
+	int(*waitfunc)(struct mtd_info *mtd, struct nand_chip *this);
+	void (*erase_cmd)(struct mtd_info *mtd, int page);
+	int (*scan_bbt)(struct mtd_info *mtd);
+	int (*errstat)(struct mtd_info *mtd, struct nand_chip *this, int state,
+			int status, int page);
+	int (*write_page)(struct mtd_info *mtd, struct nand_chip *chip,
+			const uint8_t *buf, int page, int cached, int raw);
 
-	uint8_t		(*read_byte)(struct mtd_info *mtd);
-	u16		(*read_word)(struct mtd_info *mtd);
-	void		(*write_buf)(struct mtd_info *mtd, const uint8_t *buf, int len);
-	void		(*read_buf)(struct mtd_info *mtd, uint8_t *buf, int len);
-	int		(*verify_buf)(struct mtd_info *mtd, const uint8_t *buf, int len);
-	void		(*select_chip)(struct mtd_info *mtd, int chip);
-	int		(*block_bad)(struct mtd_info *mtd, loff_t ofs, int getchip);
-	int		(*block_markbad)(struct mtd_info *mtd, loff_t ofs);
-	void		(*cmd_ctrl)(struct mtd_info *mtd, int dat,
-				    unsigned int ctrl);
-	int		(*dev_ready)(struct mtd_info *mtd);
-	void		(*cmdfunc)(struct mtd_info *mtd, unsigned command, int column, int page_addr);
-	int		(*waitfunc)(struct mtd_info *mtd, struct nand_chip *this);
-	void		(*erase_cmd)(struct mtd_info *mtd, int page);
-	int		(*scan_bbt)(struct mtd_info *mtd);
-	int		(*errstat)(struct mtd_info *mtd, struct nand_chip *this, int state, int status, int page);
-	int		(*write_page)(struct mtd_info *mtd, struct nand_chip *chip,
-				      const uint8_t *buf, int page, int cached, int raw);
+	int chip_delay;
+	unsigned int options;
 
-	int		chip_delay;
-	unsigned int	options;
+	int page_shift;
+	int phys_erase_shift;
+	int bbt_erase_shift;
+	int chip_shift;
+	int numchips;
+	unsigned long chipsize;
+	int pagemask;
+	int pagebuf;
+	int subpagesize;
+	uint8_t cellinfo;
+	int badblockpos;
 
-	int		page_shift;
-	int		phys_erase_shift;
-	int		bbt_erase_shift;
-	int		chip_shift;
-	int		numchips;
-	unsigned long	chipsize;
-	int		pagemask;
-	int		pagebuf;
-	int		subpagesize;
-	uint8_t		cellinfo;
-	int		badblockpos;
+	nand_state_t state;
 
-	nand_state_t	state;
-
-	uint8_t		*oob_poi;
-	struct nand_hw_control  *controller;
-	struct nand_ecclayout	*ecclayout;
+	uint8_t *oob_poi;
+	struct nand_hw_control *controller;
+	struct nand_ecclayout *ecclayout;
 
 	struct nand_ecc_ctrl ecc;
 	struct nand_buffers *buffers;
@@ -410,13 +425,13 @@ struct nand_chip {
 
 	struct mtd_oob_ops ops;
 
-	uint8_t		*bbt;
-	struct nand_bbt_descr	*bbt_td;
-	struct nand_bbt_descr	*bbt_md;
+	uint8_t *bbt;
+	struct nand_bbt_descr *bbt_td;
+	struct nand_bbt_descr *bbt_md;
 
-	struct nand_bbt_descr	*badblock_pattern;
+	struct nand_bbt_descr *badblock_pattern;
 
-	void		*priv;
+	void *priv;
 };
 
 /*
@@ -461,7 +476,7 @@ struct nand_flash_dev {
 */
 struct nand_manufacturers {
 	int id;
-	char * name;
+	char *name;
 };
 
 extern struct nand_flash_dev nand_flash_ids[];
@@ -481,7 +496,7 @@ extern struct nand_manufacturers nand_manuf_ids[];
  *		blocks is reserved at the end of the device where the tables are
  *		written.
  * @reserved_block_code: if non-0, this pattern denotes a reserved (rather than
- *              bad) block in the stored bbt
+ *		bad) block in the stored bbt
  * @pattern:	pattern to identify bad block table or factory marked good /
  *		bad blocks, can be NULL, if len = 0
  *
@@ -491,14 +506,14 @@ extern struct nand_manufacturers nand_manuf_ids[];
  * of the first block.
  */
 struct nand_bbt_descr {
-	int	options;
-	int	pages[NAND_MAX_CHIPS];
-	int	offs;
-	int	veroffs;
-	uint8_t	version[NAND_MAX_CHIPS];
-	int	len;
-	int	maxblocks;
-	int	reserved_block_code;
+	int options;
+	int pages[NAND_MAX_CHIPS];
+	int offs;
+	int veroffs;
+	uint8_t version[NAND_MAX_CHIPS];
+	int len;
+	int maxblocks;
+	int reserved_block_code;
 	uint8_t	*pattern;
 };
 
@@ -543,7 +558,7 @@ extern int nand_isbad_bbt(struct mtd_info *mtd, loff_t offs, int allowbbt);
 extern int nand_erase_nand(struct mtd_info *mtd, struct erase_info *instr,
 			   int allowbbt);
 extern int nand_do_read(struct mtd_info *mtd, loff_t from, size_t len,
-			size_t * retlen, uint8_t * buf);
+			size_t *retlen, uint8_t *buf);
 
 /*
 * Constants for oob configuration
@@ -559,20 +574,20 @@ extern int nand_do_read(struct mtd_info *mtd, loff_t from, size_t len,
  * @partitions:		mtd partition list
  * @chip_delay:		R/B delay value in us
  * @options:		Option flags, e.g. 16bit buswidth
- * @ecclayout:		ecc layout info structure
+ * @ecclayout:		ECC layout info structure
  * @part_probe_types:	NULL-terminated array of probe types
  * @priv:		hardware controller specific settings
  */
 struct platform_nand_chip {
-	int			nr_chips;
-	int			chip_offset;
-	int			nr_partitions;
-	struct mtd_partition	*partitions;
-	struct nand_ecclayout	*ecclayout;
-	int			chip_delay;
-	unsigned int		options;
-	const char		**part_probe_types;
-	void			*priv;
+	int nr_chips;
+	int chip_offset;
+	int nr_partitions;
+	struct mtd_partition *partitions;
+	struct nand_ecclayout *ecclayout;
+	int chip_delay;
+	unsigned int options;
+	const char **part_probe_types;
+	void *priv;
 };
 
 /**
@@ -587,12 +602,11 @@ struct platform_nand_chip {
  * All fields are optional and depend on the hardware driver requirements
  */
 struct platform_nand_ctrl {
-	void		(*hwcontrol)(struct mtd_info *mtd, int cmd);
-	int		(*dev_ready)(struct mtd_info *mtd);
-	void		(*select_chip)(struct mtd_info *mtd, int chip);
-	void		(*cmd_ctrl)(struct mtd_info *mtd, int dat,
-				    unsigned int ctrl);
-	void		*priv;
+	void (*hwcontrol)(struct mtd_info *mtd, int cmd);
+	int (*dev_ready)(struct mtd_info *mtd);
+	void (*select_chip)(struct mtd_info *mtd, int chip);
+	void (*cmd_ctrl)(struct mtd_info *mtd, int dat, unsigned int ctrl);
+	void *priv;
 };
 
 /**
@@ -601,8 +615,8 @@ struct platform_nand_ctrl {
  * @ctrl:		controller level device structure
  */
 struct platform_nand_data {
-	struct platform_nand_chip	chip;
-	struct platform_nand_ctrl	ctrl;
+	struct platform_nand_chip chip;
+	struct platform_nand_ctrl ctrl;
 };
 
 /* Some helpers to access the data structures */
