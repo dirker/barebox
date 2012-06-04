@@ -962,9 +962,9 @@ static void cfi_init_mtd(struct flash_info *info)
 {
 	struct mtd_info *mtd = &info->mtd;
 
-	mtd->read = cfi_mtd_read;
-	mtd->write = cfi_mtd_write;
-	mtd->erase = cfi_mtd_erase;
+	mtd->_read = cfi_mtd_read;
+	mtd->_write = cfi_mtd_write;
+	mtd->_erase = cfi_mtd_erase;
 	mtd->size = info->size;
 	mtd->name = info->cdev.name;
 	mtd->erasesize = info->eraseregions[1].erasesize; /* FIXME */

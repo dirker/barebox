@@ -26,7 +26,7 @@ static int mtd_part_read(struct mtd_info *mtd, loff_t from, size_t len,
 		len = 0;
 	else if (from + len > mtd->size)
 		len = mtd->size - from;
-	res = part->master->read(part->master, from + part->offset,
+	res = part->master->_read(part->master, from + part->offset,
 				len, retlen, buf);
 	return res;
 }
@@ -42,7 +42,7 @@ static int mtd_part_write(struct mtd_info *mtd, loff_t to, size_t len,
 		len = 0;
 	else if (to + len > mtd->size)
 		len = mtd->size - to;
-	return part->master->write(part->master, to + part->offset,
+	return part->master->_write(part->master, to + part->offset,
 					len, retlen, buf);
 }
 
@@ -56,7 +56,7 @@ static int mtd_part_erase(struct mtd_info *mtd, struct erase_info *instr)
 	if (instr->addr >= mtd->size)
 		return -EINVAL;
 	instr->addr += part->offset;
-	ret = part->master->erase(part->master, instr);
+	ret = part->master->_erase(part->master, instr);
 	if (ret) {
 		if (instr->fail_addr != 0xffffffff)
 			instr->fail_addr -= part->offset;
@@ -71,7 +71,7 @@ static int mtd_part_block_isbad(struct mtd_info *mtd, loff_t ofs)
 	if (ofs >= mtd->size)
 		return -EINVAL;
 	ofs += part->offset;
-	return part->master->block_isbad(part->master, ofs);
+	return part->master->_block_isbad(part->master, ofs);
 }
 
 static int mtd_part_block_markbad(struct mtd_info *mtd, loff_t ofs)
@@ -84,7 +84,7 @@ static int mtd_part_block_markbad(struct mtd_info *mtd, loff_t ofs)
 	if (ofs >= mtd->size)
 		return -EINVAL;
 	ofs += part->offset;
-	res = part->master->block_markbad(part->master, ofs);
+	res = part->master->_block_markbad(part->master, ofs);
 	if (!res)
 		mtd->ecc_stats.badblocks++;
 	return res;
@@ -120,11 +120,11 @@ struct mtd_info *mtd_add_partition(struct mtd_info *mtd, off_t offset, size_t si
 
 	slave_mtd->numeraseregions = end - start;
 
-	slave_mtd->read = mtd_part_read;
-	slave_mtd->write = mtd_part_write;
-	slave_mtd->erase = mtd_part_erase;
-	slave_mtd->block_isbad = mtd->block_isbad ? mtd_part_block_isbad : NULL;
-	slave_mtd->block_markbad = mtd->block_markbad ? mtd_part_block_markbad : NULL;
+	slave_mtd->_read = mtd_part_read;
+	slave_mtd->_write = mtd_part_write;
+	slave_mtd->_erase = mtd_part_erase;
+	slave_mtd->_block_isbad = mtd->_block_isbad ? mtd_part_block_isbad : NULL;
+	slave_mtd->_block_markbad = mtd->_block_markbad ? mtd_part_block_markbad : NULL;
 	slave_mtd->size = size;
 	slave_mtd->name = strdup(name);
 

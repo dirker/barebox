@@ -1402,19 +1402,19 @@ int nand_scan_tail(struct mtd_info *mtd)
 	mtd->type = MTD_NANDFLASH;
 	mtd->flags = MTD_CAP_NANDFLASH;
 #ifdef CONFIG_MTD_WRITE
-	mtd->erase = nand_erase;
-	mtd->write = nand_write;
-	mtd->write_oob = nand_write_oob;
+	mtd->_erase = nand_erase;
+	mtd->_write = nand_write;
+	mtd->_write_oob = nand_write_oob;
 #endif
-	mtd->read = nand_read;
+	mtd->_read = nand_read;
 #ifdef CONFIG_NAND_READ_OOB
-	mtd->read_oob = nand_read_oob;
+	mtd->_read_oob = nand_read_oob;
 #endif
-	mtd->lock = NULL;
-	mtd->unlock = NULL;
-	mtd->block_isbad = nand_block_isbad;
+	mtd->_lock = NULL;
+	mtd->_unlock = NULL;
+	mtd->_block_isbad = nand_block_isbad;
 #ifdef CONFIG_MTD_WRITE
-	mtd->block_markbad = nand_block_markbad;
+	mtd->_block_markbad = nand_block_markbad;
 #endif
 	/* propagate ecc.layout to mtd_info */
 	mtd->ecclayout = chip->ecc.layout;

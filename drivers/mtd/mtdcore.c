@@ -25,7 +25,7 @@ int mtd_erase(struct mtd_info *mtd, struct erase_info *instr)
 		mtd_erase_callback(instr);
 		return 0;
 	}
-	return mtd->erase(mtd, instr);
+	return mtd->_erase(mtd, instr);
 }
 EXPORT_SYMBOL_GPL(mtd_erase);
 #endif
@@ -38,7 +38,7 @@ int mtd_read(struct mtd_info *mtd, loff_t from, size_t len, size_t *retlen,
 		return -EINVAL;
 	if (!len)
 		return 0;
-	return mtd->read(mtd, from, len, retlen, buf);
+	return mtd->_read(mtd, from, len, retlen, buf);
 }
 EXPORT_SYMBOL_GPL(mtd_read);
 
@@ -49,35 +49,35 @@ int mtd_write(struct mtd_info *mtd, loff_t to, size_t len, size_t *retlen,
 	*retlen = 0;
 	if (to < 0 || to > mtd->size || len > mtd->size - to)
 		return -EINVAL;
-	if (!mtd->write || !(mtd->flags & MTD_WRITEABLE))
+	if (!mtd->_write || !(mtd->flags & MTD_WRITEABLE))
 		return -EROFS;
 	if (!len)
 		return 0;
-	return mtd->write(mtd, to, len, retlen, buf);
+	return mtd->_write(mtd, to, len, retlen, buf);
 }
 EXPORT_SYMBOL_GPL(mtd_write);
 #endif
 
 int mtd_block_isbad(struct mtd_info *mtd, loff_t ofs)
 {
-	if (!mtd->block_isbad)
+	if (!mtd->_block_isbad)
 		return 0;
 	if (ofs < 0 || ofs > mtd->size)
 		return -EINVAL;
-	return mtd->block_isbad(mtd, ofs);
+	return mtd->_block_isbad(mtd, ofs);
 }
 EXPORT_SYMBOL_GPL(mtd_block_isbad);
 
 #ifdef CONFIG_MTD_WRITE
 int mtd_block_markbad(struct mtd_info *mtd, loff_t ofs)
 {
-	if (!mtd->block_markbad)
+	if (!mtd->_block_markbad)
 		return -EOPNOTSUPP;
 	if (ofs < 0 || ofs > mtd->size)
 		return -EINVAL;
 	if (!(mtd->flags & MTD_WRITEABLE))
 		return -EROFS;
-	return mtd->block_markbad(mtd, ofs);
+	return mtd->_block_markbad(mtd, ofs);
 }
 EXPORT_SYMBOL_GPL(mtd_block_markbad);
 #endif
