@@ -275,11 +275,11 @@ struct nand_ecc_ctrl {
 	int (*correct)(struct mtd_info *mtd, uint8_t *dat, uint8_t *read_ecc,
 			uint8_t *calc_ecc);
 	int (*read_page_raw)(struct mtd_info *mtd, struct nand_chip *chip,
-			uint8_t *buf);
+			uint8_t *buf, int page);
 	void (*write_page_raw)(struct mtd_info *mtd, struct nand_chip *chip,
 			const uint8_t *buf);
 	int (*read_page)(struct mtd_info *mtd, struct nand_chip *chip,
-			uint8_t *buf);
+			uint8_t *buf, int page);
 	void (*write_page)(struct mtd_info *mtd, struct nand_chip *chip,
 			const uint8_t *buf);
 	int (*read_oob)(struct mtd_info *mtd, struct nand_chip *chip, int page,

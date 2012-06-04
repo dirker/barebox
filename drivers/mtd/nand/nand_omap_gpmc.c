@@ -619,7 +619,7 @@ static int omap_gpmc_read_buf_manual(struct mtd_info *mtd, struct nand_chip *chi
  * generate dummy eccs for the unprotected oob area.
  */
 static int omap_gpmc_read_page_bch_rom_mode(struct mtd_info *mtd,
-		struct nand_chip *chip, uint8_t *buf)
+		struct nand_chip *chip, uint8_t *buf, int page)
 {
 	struct gpmc_nand_info *oinfo = chip->priv;
 	int dev_width = chip->options & NAND_BUSWIDTH_16 ? GPMC_ECC_CONFIG_ECC16B : 0;
