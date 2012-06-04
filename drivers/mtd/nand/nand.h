@@ -28,4 +28,7 @@ void nand_init_ecc_hw(struct nand_chip *chip);
 void nand_init_ecc_soft(struct nand_chip *chip);
 void nand_init_ecc_hw_syndrome(struct nand_chip *chip);
 
+int nand_flash_detect_onfi(struct mtd_info *mtd, struct nand_chip *chip,
+                           int *busw);
+
 #endif /* __NAND_H */

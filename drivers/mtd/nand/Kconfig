@@ -8,6 +8,11 @@ menuconfig NAND
 
 if NAND
 
+config NAND_ONFI
+	bool
+	default y
+	prompt "Support ONFI flashes"
+
 config NAND_ECC_SOFT
 	bool
 	default y

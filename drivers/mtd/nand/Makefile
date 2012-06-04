@@ -8,6 +8,7 @@ obj-$(CONFIG_NAND_ECC_HW_SYNDROME)	+= nand_hwecc_syndrome.o
 obj-$(CONFIG_MTD_NAND_IDS)		+= nand_ids.o
 obj-$(CONFIG_NAND)			+= nand_base.o nand-bb.o
 obj-$(CONFIG_NAND_BBT)			+= nand_bbt.o
+obj-$(CONFIG_NAND_ONFI)			+= nand_onfi.o
 
 obj-$(CONFIG_MTD_NAND_DISKONCHIP)	+= diskonchip.o
 obj-$(CONFIG_MTD_NAND_NOMADIK)		+= nomadik_nand.o
