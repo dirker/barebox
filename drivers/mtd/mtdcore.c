@@ -96,7 +96,7 @@ int add_mtd_device(struct mtd_info *mtd, char *devname)
 	register_device(&mtd->class_dev);
 
 	if (IS_ENABLED(CONFIG_PARAMETER)) {
-		sprintf(str, "%u", mtd->size);
+		sprintf(str, "%llu", mtd->size);
 		dev_add_param_fixed(&mtd->class_dev, "size", str);
 		sprintf(str, "%u", mtd->erasesize);
 		dev_add_param_fixed(&mtd->class_dev, "erasesize", str);

@@ -141,9 +141,6 @@ static int partition_ioctl(struct cdev *cdev, int request, void *buf)
 			user->erasesize	= cdev->mtd->erasesize;
 			user->oobsize	= cdev->mtd->oobsize;
 			user->mtd	= cdev->mtd;
-			/* The below fields are obsolete */
-			user->ecctype	= -1;
-			user->eccsize	= 0;
 			break;
 		}
 		if (!cdev->ops->ioctl) {

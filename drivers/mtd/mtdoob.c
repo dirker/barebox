@@ -47,7 +47,7 @@ static ssize_t mtdoob_read(struct cdev *cdev, void *buf, size_t count,
 	if (count < mtd->oobsize)
 		return -EINVAL;
 
-	ops.mode = MTD_OOB_RAW;
+	ops.mode = MTD_OPS_RAW;
 	ops.ooboffs = 0;
 	ops.ooblen = mtd->oobsize;
 	ops.oobbuf = buf;
@@ -74,7 +74,7 @@ static int add_mtdoob_device(struct mtd_info *mtd, char *devname)
 
 	mtdoob = xzalloc(sizeof(*mtdoob));
 	mtdoob->cdev.ops = &mtdoob_ops;
-	mtdoob->cdev.size = (mtd->size / mtd->writesize) * mtd->oobsize;
+	mtdoob->cdev.size = mtd_div_by_ws(mtd->size, mtd) * mtd->oobsize;
 	mtdoob->cdev.name = asprintf("%s_oob%d", devname, mtd->class_dev.id);
 	mtdoob->cdev.priv = mtdoob;
 	mtdoob->cdev.dev = &mtd->class_dev;

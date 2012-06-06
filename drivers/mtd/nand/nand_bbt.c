@@ -241,7 +241,7 @@ static int scan_read_raw(struct mtd_info *mtd, uint8_t *buf, loff_t offs,
 {
 	struct mtd_oob_ops ops;
 
-	ops.mode = MTD_OOB_RAW;
+	ops.mode = MTD_OPS_RAW;
 	ops.ooboffs = 0;
 	ops.ooblen = mtd->oobsize;
 	ops.oobbuf = buf;
@@ -259,7 +259,7 @@ static int scan_write_bbt(struct mtd_info *mtd, loff_t offs, size_t len,
 {
 	struct mtd_oob_ops ops;
 
-	ops.mode = MTD_OOB_PLACE;
+	ops.mode = MTD_OPS_PLACE_OOB;
 	ops.ooboffs = 0;
 	ops.ooblen = mtd->oobsize;
 	ops.datbuf = buf;
@@ -338,7 +338,7 @@ static int scan_block_fast(struct mtd_info *mtd, struct nand_bbt_descr *bd,
 	ops.oobbuf = buf;
 	ops.ooboffs = 0;
 	ops.datbuf = NULL;
-	ops.mode = MTD_OOB_PLACE;
+	ops.mode = MTD_OPS_PLACE_OOB;
 
 	for (j = 0; j < len; j++) {
 		/*
@@ -576,7 +576,7 @@ static int write_bbt(struct mtd_info *mtd, uint8_t *buf,
 	ops.ooblen = mtd->oobsize;
 	ops.ooboffs = 0;
 	ops.datbuf = NULL;
-	ops.mode = MTD_OOB_PLACE;
+	ops.mode = MTD_OPS_PLACE_OOB;
 
 	if (!rcode)
 		rcode = 0xff;

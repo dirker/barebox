@@ -97,7 +97,7 @@ static ssize_t mtdraw_read_unaligned(struct mtd_info *mtd, void *dst,
 		tmp = malloc(mtd->writesize + mtd->oobsize);
 	if (!tmp)
 		return -ENOMEM;
-	ops.mode = MTD_OOB_RAW;
+	ops.mode = MTD_OPS_RAW;
 	ops.datbuf = tmp;
 	ops.len = mtd->writesize;
 	ops.oobbuf = tmp + mtd->writesize;
@@ -149,7 +149,7 @@ static ssize_t mtdraw_blkwrite(struct mtd_info *mtd, const void *buf,
 	struct mtd_oob_ops ops;
 	int ret;
 
-	ops.mode = MTD_OOB_RAW;
+	ops.mode = MTD_OPS_RAW;
 	ops.datbuf = (void *)buf;
 	ops.len = mtd->writesize;
 	ops.oobbuf = (void *)buf + mtd->writesize;
@@ -239,7 +239,7 @@ static ssize_t mtdraw_erase(struct cdev *cdev, size_t count, ulong offset)
 
 		ret = mtd_block_isbad(mtd, erase.addr);
 		if (ret > 0) {
-			printf("Skipping bad block at 0x%08x\n", erase.addr);
+			printf("Skipping bad block at 0x%08llx\n", erase.addr);
 		} else {
 			ret = mtd_erase(mtd, &erase);
 			if (ret)
@@ -281,7 +281,7 @@ static int add_mtdraw_device(struct mtd_info *mtd, char *devname)
 	mtdraw->mtd = mtd;
 
 	mtdraw->cdev.ops = (struct file_operations *)&mtd_raw_fops;
-	mtdraw->cdev.size = mtd->size / mtd->writesize *
+	mtdraw->cdev.size = mtd_div_by_ws(mtd->size, mtd) *
 		(mtd->writesize + mtd->oobsize);
 	mtdraw->cdev.name = asprintf("%sraw%d", devname, mtd->class_dev.id);
 	mtdraw->cdev.priv = mtdraw;

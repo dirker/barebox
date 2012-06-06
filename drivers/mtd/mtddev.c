@@ -145,9 +145,6 @@ int mtddev_ioctl(struct cdev *cdev, int request, void *buf)
 		user->erasesize	= mtd->erasesize;
 		user->oobsize	= mtd->oobsize;
 		user->mtd	= mtd;
-		/* The below fields are obsolete */
-		user->ecctype	= -1;
-		user->eccsize	= 0;
 		break;
 #if (defined(CONFIG_NAND_ECC_HW) || defined(CONFIG_NAND_ECC_SOFT))
 	case ECCGETSTATS:
@@ -185,11 +182,11 @@ static ssize_t mtddev_erase(struct cdev *cdev, size_t count, unsigned long offse
 	erase.len = mtd->erasesize;
 
 	while (count > 0) {
-		dev_dbg(cdev->dev, "erase %d %d\n", erase.addr, erase.len);
+		dev_dbg(cdev->dev, "erase %llu %llu\n", erase.addr, erase.len);
 
 		ret = mtd_block_isbad(mtd, erase.addr);
 		if (ret > 0) {
-			printf("Skipping bad block at 0x%08x\n", erase.addr);
+			printf("Skipping bad block at %#0llx\n", erase.addr);
 		} else {
 			ret = mtd_erase(mtd, &erase);
 			if (ret)

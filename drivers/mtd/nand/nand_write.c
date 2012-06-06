@@ -213,12 +213,12 @@ static uint8_t *nand_fill_oob(struct nand_chip *chip, uint8_t *oob,
 
 	switch(ops->mode) {
 
-	case MTD_OOB_PLACE:
-	case MTD_OOB_RAW:
+	case MTD_OPS_PLACE_OOB:
+	case MTD_OPS_RAW:
 		memcpy(chip->oob_poi + ops->ooboffs, oob, len);
 		return oob + len;
 
-	case MTD_OOB_AUTO: {
+	case MTD_OPS_AUTO_OOB: {
 		struct nand_oobfree *free = chip->ecc.layout->oobfree;
 		uint32_t boffs = 0, woffs = ops->ooboffs;
 		size_t bytes = 0;
@@ -326,7 +326,7 @@ int nand_do_write_ops(struct mtd_info *mtd, loff_t to,
 			oob = nand_fill_oob(chip, oob, ops);
 
 		ret = chip->write_page(mtd, chip, wbuf, page, cached,
-				       (ops->mode == MTD_OOB_RAW));
+				       (ops->mode == MTD_OPS_RAW));
 		if (ret)
 			break;
 
@@ -403,7 +403,7 @@ static int nand_do_write_oob(struct mtd_info *mtd, loff_t to,
 	MTD_DEBUG(MTD_DEBUG_LEVEL3, "nand_write_oob: to = 0x%08x, len = %i\n",
 	      (unsigned int)to, (int)ops->ooblen);
 
-	if (ops->mode == MTD_OOB_AUTO)
+	if (ops->mode == MTD_OPS_AUTO_OOB)
 		len = chip->ecc.layout->oobavail;
 	else
 		len = mtd->oobsize;
@@ -487,9 +487,9 @@ int nand_write_oob(struct mtd_info *mtd, loff_t to,
 	}
 
 	switch(ops->mode) {
-	case MTD_OOB_PLACE:
-	case MTD_OOB_AUTO:
-	case MTD_OOB_RAW:
+	case MTD_OPS_PLACE_OOB:
+	case MTD_OPS_AUTO_OOB:
+	case MTD_OPS_RAW:
 		break;
 
 	default:

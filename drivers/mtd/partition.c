@@ -126,7 +126,7 @@ struct mtd_info *mtd_add_partition(struct mtd_info *mtd, off_t offset, size_t si
 	slave_mtd->_block_isbad = mtd->_block_isbad ? mtd_part_block_isbad : NULL;
 	slave_mtd->_block_markbad = mtd->_block_markbad ? mtd_part_block_markbad : NULL;
 	slave_mtd->size = size;
-	slave_mtd->name = strdup(name);
+	slave_mtd->name = name;
 
 	slave->offset = offset;
 	slave->master = mtd;
@@ -138,6 +138,5 @@ void mtd_del_partition(struct mtd_info *mtd)
 {
 	struct mtd_part *part = PART(mtd);
 
-	free(mtd->name);
 	free(part);
 }
