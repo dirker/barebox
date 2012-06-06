@@ -1,10 +1,11 @@
 #include <common.h>
 #include <errno.h>
 #include <clock.h>
+#include <linux/err.h>
 #include <linux/mtd/mtd.h>
 #include <linux/mtd/nand.h>
-#include <linux/err.h>
 #include <linux/mtd/nand_ecc.h>
+#include <linux/mtd/nand_bch.h>
 #include <asm/byteorder.h>
 #include <io.h>
 #include <malloc.h>
@@ -12,10 +13,11 @@
 #include "nand.h"
 
 /**
- * nand_read_page_swecc - [REPLACABLE] software ecc based page read function
- * @mtd:	mtd info structure
- * @chip:	nand chip info structure
- * @buf:	buffer to store read data
+ * nand_read_page_swecc - [REPLACEABLE] software ECC based page read function
+ * @mtd: mtd info structure
+ * @chip: nand chip info structure
+ * @buf: buffer to store read data
+ * @page: page number to read
  */
 static int nand_read_page_swecc(struct mtd_info *mtd, struct nand_chip *chip,
 				uint8_t *buf, int page)
@@ -52,10 +54,10 @@ static int nand_read_page_swecc(struct mtd_info *mtd, struct nand_chip *chip,
 }
 
 /**
- * nand_write_page_swecc - [REPLACABLE] software ecc based page write function
- * @mtd:	mtd info structure
- * @chip:	nand chip info structure
- * @buf:	data buffer
+ * nand_write_page_swecc - [REPLACEABLE] software ECC based page write function
+ * @mtd: mtd info structure
+ * @chip: nand chip info structure
+ * @buf: data buffer
  */
 #ifdef CONFIG_MTD_WRITE
 static void nand_write_page_swecc(struct mtd_info *mtd, struct nand_chip *chip,
@@ -68,7 +70,7 @@ static void nand_write_page_swecc(struct mtd_info *mtd, struct nand_chip *chip,
 	const uint8_t *p = buf;
 	uint32_t *eccpos = chip->ecc.layout->eccpos;
 
-	/* Software ecc calculation */
+	/* Software ECC calculation */
 	for (i = 0; eccsteps; eccsteps--, i += eccbytes, p += eccsize)
 		chip->ecc.calculate(mtd, p, &ecc_calc[i]);
 
@@ -79,16 +81,70 @@ static void nand_write_page_swecc(struct mtd_info *mtd, struct nand_chip *chip,
 }
 #endif
 
-void nand_init_ecc_soft(struct nand_chip *chip)
+void nand_init_ecc_soft(struct mtd_info *mtd, struct nand_chip *chip)
 {
-	chip->ecc.calculate = nand_calculate_ecc;
-	chip->ecc.correct = nand_correct_data;
-	chip->ecc.read_page = nand_read_page_swecc;
-	chip->ecc.read_oob = nand_read_oob_std;
-#ifdef CONFIG_MTD_WRITE
-	chip->ecc.write_page = nand_write_page_swecc;
-	chip->ecc.write_oob = nand_write_oob_std;
+	switch (chip->ecc.mode) {
+	case NAND_ECC_SOFT:
+		chip->ecc.calculate = nand_calculate_ecc;
+		chip->ecc.correct = nand_correct_data;
+		chip->ecc.read_page = nand_read_page_swecc;
+		chip->ecc.read_subpage = nand_read_subpage;
+		chip->ecc.read_page_raw = nand_read_page_raw;
+#ifdef CONFIG_NAND_READ_OOB
+		chip->ecc.read_oob = nand_read_oob_std;
 #endif
-	chip->ecc.size = 256;
-	chip->ecc.bytes = 3;
+#ifdef CONFIG_MTD_WRITE
+		chip->ecc.write_page = nand_write_page_swecc;
+		chip->ecc.write_page_raw = nand_write_page_raw;
+		chip->ecc.write_oob = nand_write_oob_std;
+#endif
+		if (!chip->ecc.size)
+			chip->ecc.size = 256;
+		chip->ecc.bytes = 3;
+		chip->ecc.strength = 1;
+		break;
+
+	case NAND_ECC_SOFT_BCH:
+		if (!mtd_nand_has_bch()) {
+			pr_warn("CONFIG_MTD_ECC_BCH not enabled\n");
+			BUG();
+		}
+		chip->ecc.calculate = nand_bch_calculate_ecc;
+		chip->ecc.correct = nand_bch_correct_data;
+		chip->ecc.read_page = nand_read_page_swecc;
+		chip->ecc.read_subpage = nand_read_subpage;
+		chip->ecc.read_page_raw = nand_read_page_raw;
+#ifdef CONFIG_NAND_READ_OOB
+		chip->ecc.read_oob = nand_read_oob_std;
+#endif
+#ifdef CONFIG_MTD_WRITE
+		chip->ecc.write_page = nand_write_page_swecc;
+		chip->ecc.write_page_raw = nand_write_page_raw;
+		chip->ecc.write_oob = nand_write_oob_std;
+#endif
+		/*
+		 * Board driver should supply ecc.size and ecc.bytes values to
+		 * select how many bits are correctable; see nand_bch_init()
+		 * for details. Otherwise, default to 4 bits for large page
+		 * devices.
+		 */
+		if (!chip->ecc.size && (mtd->oobsize >= 64)) {
+			chip->ecc.size = 512;
+			chip->ecc.bytes = 7;
+		}
+		chip->ecc.priv = nand_bch_init(mtd,
+					       chip->ecc.size,
+					       chip->ecc.bytes,
+					       &chip->ecc.layout);
+		if (!chip->ecc.priv) {
+			pr_warn("BCH ECC initialization failed!\n");
+			BUG();
+		}
+		chip->ecc.strength =
+			chip->ecc.bytes*8 / fls(8*chip->ecc.size);
+		break;
+	
+	default:
+		break;
+	}
 }

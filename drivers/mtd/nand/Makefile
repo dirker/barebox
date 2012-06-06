@@ -3,6 +3,7 @@
 obj-$(CONFIG_NAND)			+= nand_ecc.o
 obj-$(CONFIG_MTD_WRITE)			+= nand_write.o
 obj-$(CONFIG_NAND_ECC_SOFT)		+= nand_ecc.o nand_swecc.o
+obj-$(CONFIG_NAND_ECC_BCH)		+= nand_bch.o
 obj-$(CONFIG_NAND_ECC_HW)		+= nand_hwecc.o
 obj-$(CONFIG_NAND_ECC_HW_SYNDROME)	+= nand_hwecc_syndrome.o
 obj-$(CONFIG_MTD_NAND_IDS)		+= nand_ids.o

@@ -10,14 +10,17 @@
 #include <malloc.h>
 #include <module.h>
 
+#include "nand.h"
+
 /**
- * nand_read_page_syndrome - [REPLACABLE] hardware ecc syndrom based page read
- * @mtd:	mtd info structure
- * @chip:	nand chip info structure
- * @buf:	buffer to store read data
+ * nand_read_page_syndrome - [REPLACEABLE] hardware ECC syndrome based page read
+ * @mtd: mtd info structure
+ * @chip: nand chip info structure
+ * @buf: buffer to store read data
+ * @page: page number to read
  *
- * The hw generator calculates the error syndrome automatically. Therefor
- * we need a special oob layout and handling.
+ * The hw generator calculates the error syndrome automatically. Therefore we
+ * need a special oob layout and handling.
  */
 static int nand_read_page_syndrome(struct mtd_info *mtd, struct nand_chip *chip,
 				   uint8_t *buf, int page)
@@ -63,14 +66,58 @@ static int nand_read_page_syndrome(struct mtd_info *mtd, struct nand_chip *chip,
 
 	return 0;
 }
+
 /**
- * nand_write_page_syndrome - [REPLACABLE] hardware ecc syndrom based page write
- * @mtd:	mtd info structure
- * @chip:	nand chip info structure
- * @buf:	data buffer
+ * nand_read_page_raw_syndrome - [INTERN] read raw page data without ecc
+ * @mtd: mtd info structure
+ * @chip: nand chip info structure
+ * @buf: buffer to store read data
+ * @page: page number to read
  *
- * The hw generator calculates the error syndrome automatically. Therefor
- * we need a special oob layout and handling.
+ * We need a special oob layout and handling even when OOB isn't used.
+ */
+static int nand_read_page_raw_syndrome(struct mtd_info *mtd,
+					struct nand_chip *chip,
+					uint8_t *buf, int page)
+{
+	int eccsize = chip->ecc.size;
+	int eccbytes = chip->ecc.bytes;
+	uint8_t *oob = chip->oob_poi;
+	int steps, size;
+
+	for (steps = chip->ecc.steps; steps > 0; steps--) {
+		chip->read_buf(mtd, buf, eccsize);
+		buf += eccsize;
+
+		if (chip->ecc.prepad) {
+			chip->read_buf(mtd, oob, chip->ecc.prepad);
+			oob += chip->ecc.prepad;
+		}
+
+		chip->read_buf(mtd, oob, eccbytes);
+		oob += eccbytes;
+
+		if (chip->ecc.postpad) {
+			chip->read_buf(mtd, oob, chip->ecc.postpad);
+			oob += chip->ecc.postpad;
+		}
+	}
+
+	size = mtd->oobsize - (oob - chip->oob_poi);
+	if (size)
+		chip->read_buf(mtd, oob, size);
+
+	return 0;
+}
+
+/**
+ * nand_write_page_syndrome - [REPLACEABLE] hardware ECC syndrome based page write
+ * @mtd: mtd info structure
+ * @chip: nand chip info structure
+ * @buf: data buffer
+ *
+ * The hw generator calculates the error syndrome automatically. Therefore we
+ * need a special oob layout and handling.
  */
 #ifdef CONFIG_MTD_WRITE
 static void nand_write_page_syndrome(struct mtd_info *mtd,
@@ -110,13 +157,56 @@ static void nand_write_page_syndrome(struct mtd_info *mtd,
 #endif
 
 /**
- * nand_read_oob_syndrome - [REPLACABLE] OOB data read function for HW ECC
- *			    with syndromes
- * @mtd:	mtd info structure
- * @chip:	nand chip info structure
- * @page:	page number to read
- * @sndcmd:	flag whether to issue read command or not
+ * nand_write_page_raw_syndrome - [INTERN] raw page write function
+ * @mtd: mtd info structure
+ * @chip: nand chip info structure
+ * @buf: data buffer
+ *
+ * We need a special oob layout and handling even when ECC isn't checked.
  */
+#ifdef CONFIG_MTD_WRITE
+static void nand_write_page_raw_syndrome(struct mtd_info *mtd,
+					struct nand_chip *chip,
+					const uint8_t *buf)
+{
+	int eccsize = chip->ecc.size;
+	int eccbytes = chip->ecc.bytes;
+	uint8_t *oob = chip->oob_poi;
+	int steps, size;
+
+	for (steps = chip->ecc.steps; steps > 0; steps--) {
+		chip->write_buf(mtd, buf, eccsize);
+		buf += eccsize;
+
+		if (chip->ecc.prepad) {
+			chip->write_buf(mtd, oob, chip->ecc.prepad);
+			oob += chip->ecc.prepad;
+		}
+
+		chip->read_buf(mtd, oob, eccbytes);
+		oob += eccbytes;
+
+		if (chip->ecc.postpad) {
+			chip->write_buf(mtd, oob, chip->ecc.postpad);
+			oob += chip->ecc.postpad;
+		}
+	}
+
+	size = mtd->oobsize - (oob - chip->oob_poi);
+	if (size)
+		chip->write_buf(mtd, oob, size);
+}
+#endif
+
+/**
+ * nand_read_oob_syndrome - [REPLACEABLE] OOB data read function for HW ECC
+ *			    with syndromes
+ * @mtd: mtd info structure
+ * @chip: nand chip info structure
+ * @page: page number to read
+ * @sndcmd: flag whether to issue read command or not
+ */
+#ifdef CONFIG_NAND_READ_OOB
 static int nand_read_oob_syndrome(struct mtd_info *mtd, struct nand_chip *chip,
 				  int page, int sndcmd)
 {
@@ -147,13 +237,14 @@ static int nand_read_oob_syndrome(struct mtd_info *mtd, struct nand_chip *chip,
 
 	return 1;
 }
+#endif
 
 /**
- * nand_write_oob_syndrome - [REPLACABLE] OOB data write function for HW ECC
- *			     with syndrome - only for large page flash !
- * @mtd:	mtd info structure
- * @chip:	nand chip info structure
- * @page:	page number to write
+ * nand_write_oob_syndrome - [REPLACEABLE] OOB data write function for HW ECC
+ *			     with syndrome - only for large page flash
+ * @mtd: mtd info structure
+ * @chip: nand chip info structure
+ * @page: page number to write
  */
 #ifdef CONFIG_MTD_WRITE
 static int nand_write_oob_syndrome(struct mtd_info *mtd,
@@ -209,17 +300,41 @@ static int nand_write_oob_syndrome(struct mtd_info *mtd,
 }
 #endif
 
-void nand_init_ecc_hw_syndrome(struct nand_chip *chip)
+void nand_init_ecc_hw_syndrome(struct mtd_info *mtd, struct nand_chip *chip)
 {
-		/* Use standard syndrome read/write page function ? */
+	if ((!chip->ecc.calculate || !chip->ecc.correct ||
+	     !chip->ecc.hwctl) &&
+	    (!chip->ecc.read_page ||
+	     chip->ecc.read_page == nand_read_page_hwecc ||
+	     !chip->ecc.write_page ||
+	     chip->ecc.write_page == nand_write_page_hwecc)) {
+		pr_warn("No ECC functions supplied; "
+			   "hardware ECC not possible\n");
+		BUG();
+	}
+	/* Use standard syndrome read/write page function? */
 	if (!chip->ecc.read_page)
 		chip->ecc.read_page = nand_read_page_syndrome;
+	if (!chip->ecc.read_page_raw)
+		chip->ecc.read_page_raw = nand_read_page_raw_syndrome;
+#ifdef CONFIG_NAND_READ_OOB
 	if (!chip->ecc.read_oob)
 		chip->ecc.read_oob = nand_read_oob_syndrome;
+#endif
 #ifdef CONFIG_MTD_WRITE
 	if (!chip->ecc.write_page)
 		chip->ecc.write_page = nand_write_page_syndrome;
+	if (!chip->ecc.write_page_raw)
+		chip->ecc.write_page_raw = nand_write_page_raw_syndrome;
 	if (!chip->ecc.write_oob)
 		chip->ecc.write_oob = nand_write_oob_syndrome;
 #endif
+
+	/* barebox: error out instead of falling through */
+	if (mtd->writesize < chip->ecc.size) {
+		pr_warn("%d byte HW ECC not possible on "
+		        "%d byte page size\n",
+		        chip->ecc.size, mtd->writesize);
+		BUG();
+	}
 }

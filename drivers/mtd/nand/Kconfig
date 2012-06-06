@@ -18,6 +18,12 @@ config NAND_ECC_SOFT
 	default y
 	prompt "Support software ecc"
 
+config NAND_ECC_BCH
+	bool
+	default y
+	prompt "Support software BCH ecc"
+	depends on NAND_ECC_SOFT
+
 config NAND_ECC_HW
 	bool
 	default y
